@@ -127,14 +127,28 @@ ssh -i ~/.ssh/your-private-key.pem ec2-user@<bastion-public-ip>
 3. **Private Subnet**  
    - CIDR: `10.0.2.0/24`
 
-4. **Bastion Host**  
+4. **Route Tables**
+   - **Public Route Table**  
+     - Routes:
+       | Destination CIDR | Target        | Description                    |
+       |------------------|---------------|--------------------------------|
+       | 10.0.0.0/16      | local         | Routes traffic within the VPC |
+       | 0.0.0.0/0        | Internet GW   | Routes traffic to the internet gateway for public access |
+   - **Private Route Table**  
+     - Routes:
+       | Destination CIDR | Target        | Description                    |
+       |------------------|---------------|--------------------------------|
+       | 10.0.0.0/16      | local         | Routes traffic within the VPC |
+       | 0.0.0.0/0        | NAT Gateway   | Routes outbound traffic via NAT Gateway |
+
+5. **Bastion Host**  
    - Public-facing EC2 instance for secure SSH access.
 
-5. **EC2 Instances**  
+6. **EC2 Instances**  
    - One Master Node
    - Two Worker Nodes
 
-6. **Security Groups**  
+7. **Security Groups**  
    - Bastion: Allows SSH access from your IP.
    - Control Plane: Allows Kubernetes API and related traffic.
    - Worker Nodes: Allows Kubernetes-related traffic.
