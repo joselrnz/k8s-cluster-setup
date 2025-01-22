@@ -39,8 +39,8 @@ aws configure
 Clone this repository to your local machine.
 
 ```bash
-git clone https://github.com/your-repo/aws-terraform-k8s-setup.git
-cd aws-terraform-k8s-setup
+git clone https://github.com/joselrnz/k8s-cluster-setup.git
+cd k8s-cluster-setup
 ```
 
 ---
