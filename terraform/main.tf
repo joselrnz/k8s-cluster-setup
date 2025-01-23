@@ -19,7 +19,12 @@ module "bastion" {
 module "security_groups" {
   source = "./modules/security_groups"
   vpc_id = module.network.vpc_id
-  my_ip  = var.my_ip
+  # my_ip  = var.my_ip
+  bastion_private_ip = module.bastion.bastion_private_ip
+}
+
+module "iam" {
+  source = "./modules/iam"  
 }
 
 module "ec2_instances" {
@@ -30,4 +35,6 @@ module "ec2_instances" {
   key_name           = var.key_name
   control_plane_sg_id = module.security_groups.control_plane_sg_id
   worker_sg_id        = module.security_groups.worker_sg_id
+  instance_profile    = module.iam.k8s_iam_instance_profile
 }
+

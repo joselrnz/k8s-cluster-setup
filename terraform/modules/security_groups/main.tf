@@ -5,7 +5,7 @@ resource "aws_security_group" "control_plane_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.my_ip]
+    cidr_blocks = ["${var.bastion_private_ip}/32"]
   }
 
   ingress {
@@ -53,7 +53,12 @@ resource "aws_security_group" "control_plane_sg" {
 
 resource "aws_security_group" "worker_node_sg" {
   vpc_id = var.vpc_id
-
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["${var.bastion_private_ip}/32"]
+  }
   ingress {
     from_port   = 10250
     to_port     = 10250

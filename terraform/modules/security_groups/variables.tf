@@ -1,2 +1,2 @@
 variable "vpc_id" {}
-variable "my_ip" {}
+variable "bastion_private_ip" {}
