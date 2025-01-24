@@ -1,0 +1,14 @@
+---
+- name: Deploy pandas and run script
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install Kubernetes Cluster on Worker
+      include_role:
+        name: cluster_init
+      when: "'worker' in group_names"
+
+    - name: Install Kubernetes Cluster on Master
+      include_role:
+        name: cluster_init
+      when: "'master' in group_names"
