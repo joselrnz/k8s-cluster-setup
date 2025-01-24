@@ -1,0 +1,57 @@
+---
+- name: Update the package list
+  apt:
+    update_cache: yes
+
+- name: Install Python 3 and pip
+  apt:
+    name:
+      - python3
+      - python3-pip
+    state: present
+
+- name: Install Git if not already installed
+  ansible.builtin.yum:
+    name: git
+    state: present
+  when: ansible_os_family == "RedHat"
+- name: Install Git for Debian-based systems
+  ansible.builtin.apt:
+    name: git
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+- name: Clone the repository
+  ansible.builtin.git:
+    repo: "https://github.com/joselrnz/test.git"
+    dest: /tmp/test
+    version: main
+    force: yes
+- name: Ensure clust.sh is executable
+  ansible.builtin.file:
+    path: /tmp/test/clust.sh
+    mode: '0755'
+- name: List files in /tmp/test
+  shell: ls -l /tmp/test
+  register: ls_output
+- name: Display the output of ls
+  debug:
+    msg: "{{ ls_output.stdout }}"
+- name: Run clust.sh with arguments
+  command: >
+    echo "{{ node_name }}" "{{ control_plane }}"
+  register: echo_output
+
+- name: Display the output of the command
+  debug:
+    var: echo_output.stdout
+
+- name: Run clust.sh with hostname and control-plane arguments
+  shell: >
+    sudo /tmp/test/clust.sh --hostname "{{ node_name }}" --control-plane "{{ control_plane }}"
+  args:
+    executable: /bin/bash
+  register: clust_output
+- name: Display the output of clust.sh
+  debug:
+    msg: "{{ clust_output.stdout }}"
