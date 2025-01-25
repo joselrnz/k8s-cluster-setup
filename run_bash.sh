@@ -115,6 +115,10 @@ if [[ "$os_check" == *"Ubuntu"* ]]; then
         sudo apt install -y software-properties-common
         sudo apt-add-repository --yes --update ppa:ansible/ansible
         sudo apt install -y ansible
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+
 EOF
 elif [[ "$os_check" == *"Amazon Linux"* || "$os_check" == *"CentOS"* || "$os_check" == *"Red Hat"* ]]; then
     echo "Detected Amazon Linux/CentOS/Red Hat. Installing Ansible using yum..."
@@ -168,23 +172,6 @@ for name in "${!k8s_vars[@]}"; do
 done
 
 
-# Write the Ansible hosts file
-# hosts_file="./ansible/inventories/${env_var}/hosts"
-# echo "[master]" > "$hosts_file"
-# for name in "${!k8s_vars[@]}"; do
-#   if [[ "$name" == *master* ]]; then
-#     echo "${k8s_vars[$name]} ansible_user=$ssh_user ansible_ssh_private_key_file=$pem_key_path ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> "$hosts_file"
-#   fi
-# done
-
-# # Write the [worker] section to the Ansible hosts file
-# echo "[worker]" >> "$hosts_file"
-# for name in "${!k8s_vars[@]}"; do
-#   if [[ "$name" == *worker* ]]; then
-#     echo "${k8s_vars[$name]} ansible_user=$ssh_user ansible_ssh_private_key_file=$pem_key_path ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> "$hosts_file"
-#   fi
-# done
-
 echo "Ansible hosts file has been generated at $hosts_file"
 
 # Transfer Ansible playbook to Bastion
@@ -195,12 +182,24 @@ scp -i "$pem_key_location" -r "ansible" "$ssh_user@ec2-$ec2_ip_bastion.compute-1
 scp -i "$pem_key_location"  "./clust.sh" "$ssh_user@ec2-$ec2_ip_bastion.compute-1.amazonaws.com:$dst_location"
 
 # Run the Ansible playbook
-echo "Running Ansible playbook on Bastion..."
-ssh -i "$pem_key_location" -o StrictHostKeyChecking=no "$ssh_user@ec2-$ec2_ip_bastion.compute-1.amazonaws.com" <<EOF
-  cd ansible/
-  ansible-playbook -i inventories/$env_var/hosts my_playbook.yml
+# echo "Running Ansible playbook on Bastion..."
+# ssh -i "$pem_key_location" -o StrictHostKeyChecking=no "$ssh_user@ec2-$ec2_ip_bastion.compute-1.amazonaws.com" <<EOF
+#   cd ansible/
+#   ansible-playbook -i inventories/$env_var/hosts my_playbook.yml
+# EOF
+
+# echo "Ansible playbook execution completed."
+
+#./run_bash.sh "*k8s*" "*bastion*" "/home/joselrnz/aws/key_pairs/kube.pem" "/home/ubuntu/" 
+
+
+retrieve_join_command_from_master() {
+  echo "Retrieving kubeadm join command from the master node..."
+  
+  # Fetch the join command from the master node
+  ssh -i "$pem_key_location" -o StrictHostKeyChecking=no "$ssh_user@$bastion_var" <<EOF
+    ssh -i "$pem_key_path" -o StrictHostKeyChecking=no "$ssh_user@${k8s_vars[master]}" "sudo kubeadm token create --print-join-command"
 EOF
+}
 
-echo "Ansible playbook execution completed."
-
-#./run_bash.sh "*k8s*" "*bastion*" "/home/joselrnz/aws/key_pairs/kube.pem" "/home/ubuntu/"
+retrieve_join_command_from_master

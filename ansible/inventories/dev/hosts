@@ -1,5 +1,5 @@
 [master]
-10.0.2.71 ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/kube.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no' node_name=k8s-master control_plane=yes
+10.0.2.123 ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/kube.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no' node_name=k8s-master control_plane=yes
 [worker]
-10.0.2.7 ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/kube.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no' node_name=k8s-worker-1 control_plane=no
-10.0.2.21 ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/kube.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no' node_name=k8s-worker-2 control_plane=no
+10.0.2.250 ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/kube.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no' node_name=k8s-worker-1 control_plane=no
+10.0.2.226 ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/kube.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no' node_name=k8s-worker-2 control_plane=no
