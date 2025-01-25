@@ -1,0 +1,9 @@
+- name: Fetch the join command from the master node
+  fetch:
+    src: /tmp/kubeadm_join_command.sh
+    dest: /tmp/kubeadm_join_command.sh
+    flat: yes
+  delegate_to: master-node
+
+- name: Join the worker node to the cluster
+  shell: bash /tmp/kubeadm_join_command.sh

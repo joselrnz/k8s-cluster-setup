@@ -3,12 +3,24 @@
   hosts: all
   become: yes
   tasks:
-    - name: Install Kubernetes Cluster on Worker
+    - name: Install Kubernetes dependencies on Worker nodes
       include_role:
         name: cluster_init
       when: "'worker' in group_names"
 
-    - name: Install Kubernetes Cluster on Master
+    - name: Install Kubernetes dependencies on Master node
       include_role:
         name: cluster_init
       when: "'master' in group_names"
+
+- name: Configure Kubernetes cluster
+  hosts: master
+  roles:
+    - role: cluster_setup
+      tasks_from: master
+
+- name: Join worker nodes to the cluster
+  hosts: workers
+  roles:
+    - role: cluster_setup
+      tasks_from: workers
