@@ -1,26 +1,16 @@
 ---
-- name: Deploy pandas and run script
-  hosts: all
+- name: Configure Kubernetes Master Node
+  hosts: master
   become: yes
   tasks:
-    - name: Install Kubernetes dependencies on Worker nodes
+    - name: Configure Kubernetes on Master nodes
       include_role:
         name: cluster_init
-      when: "'worker' in group_names"
 
-    - name: Install Kubernetes dependencies on Master node
+- name: Configure Kubernetes Worker Nodes
+  hosts: worker
+  become: yes
+  tasks:
+    - name: Configure Kubernetes on Worker nodes
       include_role:
         name: cluster_init
-      when: "'master' in group_names"
-
-- name: Configure Kubernetes cluster
-  hosts: master
-  roles:
-    - role: cluster_setup
-      tasks_from: master
-
-- name: Join worker nodes to the cluster
-  hosts: workers
-  roles:
-    - role: cluster_setup
-      tasks_from: workers

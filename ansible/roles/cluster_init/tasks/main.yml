@@ -15,28 +15,34 @@
     name: git
     state: present
   when: ansible_os_family == "RedHat"
+
 - name: Install Git for Debian-based systems
   ansible.builtin.apt:
     name: git
     state: present
     update_cache: yes
   when: ansible_os_family == "Debian"
+
 - name: Clone the repository
   ansible.builtin.git:
     repo: "https://github.com/joselrnz/test.git"
     dest: /tmp/test
     version: main
     force: yes
+
 - name: Ensure clust.sh is executable
   ansible.builtin.file:
     path: /tmp/test/clust.sh
     mode: '0755'
+
 - name: List files in /tmp/test
   shell: ls -l /tmp/test
   register: ls_output
+
 - name: Display the output of ls
   debug:
     msg: "{{ ls_output.stdout }}"
+
 - name: Run clust.sh with arguments
   command: >
     echo "{{ node_name }}" "{{ control_plane }}"
@@ -52,6 +58,44 @@
   args:
     executable: /bin/bash
   register: clust_output
+
 - name: Display the output of clust.sh
   debug:
     msg: "{{ clust_output.stdout }}"
+
+# Generate Kubernetes join command on master
+- name: Generate Kubernetes join command on master
+  command: sudo kubeadm token create --print-join-command
+  register: kubeadm_token_output
+  when: "'master' in group_names"
+
+# Save join command to a file on master
+- name: Save join command to a file on the master
+  copy:
+    content: |
+      #!/bin/bash
+      {{ kubeadm_token_output.stdout }}
+    dest: /tmp/kubeadm_join_command.sh
+    mode: '0755'
+  when: "'master' in group_names"
+
+# Fetch the join command script from master to the Ansible controller
+- name: Fetch join command script to controller
+  fetch:
+    src: /tmp/kubeadm_join_command.sh
+    dest: /tmp/kubeadm_join_command.sh
+    flat: yes
+  when: "'master' in group_names"
+
+# Copy the join command script from the controller to the worker nodes
+- name: Copy the join script to worker nodes
+  copy:
+    src: /tmp/kubeadm_join_command.sh
+    dest: /tmp/kubeadm_join_command.sh
+    mode: '0755'
+  when: "'worker' in group_names"
+
+# Execute the join script on worker nodes
+- name: Execute the join script on worker nodes
+  command: /bin/bash /tmp/kubeadm_join_command.sh
+  when: "'worker' in group_names"
