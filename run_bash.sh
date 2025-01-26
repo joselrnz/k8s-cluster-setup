@@ -102,8 +102,8 @@ done
 # Determine OS type and set the SSH user
 echo "Checking the OS type of Bastion..."
 ec2_ip_bastion=$(echo "$bastion_var" | tr '.' '-')
-os_check=$(ssh -i "$pem_key_location" "ec2-user@ec2-$ec2_ip_bastion.compute-1.amazonaws.com" 'uname -a' 2>/dev/null || \
-           ssh -i "$pem_key_location" "ubuntu@ec2-$ec2_ip_bastion.compute-1.amazonaws.com" 'uname -a')
+os_check=$(ssh -i "$pem_key_location" -o StrictHostKeyChecking=no "ec2-user@ec2-$ec2_ip_bastion.compute-1.amazonaws.com" 'uname -a' 2>/dev/null || \
+           ssh -i "$pem_key_location" -o StrictHostKeyChecking=no "ubuntu@ec2-$ec2_ip_bastion.compute-1.amazonaws.com" 'uname -a')
 
 ssh_user=$(get_ssh_user "$os_check")
 
@@ -115,10 +115,8 @@ if [[ "$os_check" == *"Ubuntu"* ]]; then
         sudo apt install -y software-properties-common
         sudo apt-add-repository --yes --update ppa:ansible/ansible
         sudo apt install -y ansible
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
         sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-
-
 EOF
 elif [[ "$os_check" == *"Amazon Linux"* || "$os_check" == *"CentOS"* || "$os_check" == *"Red Hat"* ]]; then
     echo "Detected Amazon Linux/CentOS/Red Hat. Installing Ansible using yum..."
@@ -131,7 +129,7 @@ EOF
 else
     echo "Unknown OS or not Linux. Cannot install Ansible."
 fi
-# echo   "$pem_key_location" -o StrictHostKeyChecking=no "ubuntu@ec2-$ec2_ip_bastion.compute-1.amazonaws.com"
+echo   "$pem_key_location" -o StrictHostKeyChecking=no "ubuntu@ec2-$ec2_ip_bastion.compute-1.amazonaws.com"
 # exit 23
 echo "Detected OS type: $os_check"
 echo "SSH user: $ssh_user"
@@ -191,15 +189,3 @@ EOF
 echo "Ansible playbook execution completed."
 
 #./run_bash.sh "*k8s*" "*bastion*" "/home/joselrnz/aws/key_pairs/kube.pem" "/home/ubuntu/" 
-
-
-retrieve_join_command_from_master() {
-  echo "Retrieving kubeadm join command from the master node..."
-  
-  # Fetch the join command from the master node
-  ssh -i "$pem_key_location" -o StrictHostKeyChecking=no "$ssh_user@$bastion_var" <<EOF
-    ssh -i "$pem_key_path" ${k8s_vars[master]}" "sudo kubeadm token create --print-join-command"
-EOF
-}
-
-retrieve_join_command_from_master
