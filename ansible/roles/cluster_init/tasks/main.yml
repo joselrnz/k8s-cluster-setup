@@ -87,6 +87,13 @@
     flat: yes
   when: "'master' in group_names"
 
+- name: Fetch Kubernetes configuration from the master
+  fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: /tmp/admin.conf
+    flat: yes
+  when: "'master' in group_names"
+
 # Copy the join command script from the controller to the worker nodes
 - name: Copy the join script to worker nodes
   copy:

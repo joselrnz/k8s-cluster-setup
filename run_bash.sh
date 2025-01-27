@@ -184,8 +184,23 @@ echo "Running Ansible playbook on Bastion..."
 ssh -i "$pem_key_location" -o StrictHostKeyChecking=no "$ssh_user@ec2-$ec2_ip_bastion.compute-1.amazonaws.com" <<EOF
   cd ansible/
   ansible-playbook -i inventories/$env_var/hosts my_playbook.yml
+  cd ~/
+  sudo mkdir -p /home/$ssh_user/.kube
+  sudo cp /tmp/admin.conf /home/$ssh_user/.kube/config
+
+  # Step 2: Set proper ownership and permissions
+  sudo chown -R $ssh_user:$ssh_user /home/$ssh_user/.kube
+  sudo chmod 600 /home/$ssh_user/.kube/config
+
+  # Step 3: Set the KUBECONFIG environment variable (persistent)
+  echo "export KUBECONFIG=/home/$ssh_user/.kube/config" >> /home/$ssh_user/.bashrc
+  source /home/$ssh_user/.bashrc
+
+  # Verify kubectl works without sudo
+  echo "Testing kubectl..."
+  kubectl get nodes
 EOF
 
 echo "Ansible playbook execution completed."
-
+ssh -i "$pem_key_location" -o StrictHostKeyChecking=no "$ssh_user@ec2-$ec2_ip_bastion.compute-1.amazonaws.com"
 #./run_bash.sh "*k8s*" "*bastion*" "/home/joselrnz/aws/key_pairs/kube.pem" "/home/ubuntu/" 
