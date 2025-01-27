@@ -203,4 +203,7 @@ EOF
 
 echo "Ansible playbook execution completed."
 ssh -i "$pem_key_location" -o StrictHostKeyChecking=no "$ssh_user@ec2-$ec2_ip_bastion.compute-1.amazonaws.com"
+
+# Command to run 
+##./run_bash.sh "*k8s*" "*bastion*" "<Key pair location>.pem" "/home/ubuntu/" 
 #./run_bash.sh "*k8s*" "*bastion*" "/home/joselrnz/aws/key_pairs/kube.pem" "/home/ubuntu/" 
