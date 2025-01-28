@@ -1,0 +1,45 @@
+name: Simple CI/CD Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Environment to deploy to (e.g., dev, staging, prod)"
+        required: true
+        default: "dev"
+
+jobs:
+  build:
+    name: Build and Upload Artifact
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create artifact folder
+        run: |
+          mkdir -p output
+          echo "This is a test artifact for environment ${{ github.event.inputs.env }}" > output/artifact4.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifact4
+          path: output/artifact4.txt
+
+  deploy:
+    name: Deploy Stage
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: artifact4
+          path: Kubernetes
+
+      - name: List files in Kubernetes folder
+        run: |
+          ls -l Kubernetes
