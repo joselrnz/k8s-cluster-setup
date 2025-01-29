@@ -1,4 +1,4 @@
-name: Simple CI/CD Workflow
+name: Deploy Kubernetes Infrastructure
 
 on:
   workflow_dispatch:
