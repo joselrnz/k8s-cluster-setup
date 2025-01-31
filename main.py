@@ -40,5 +40,16 @@ def terraform_apply(ctx):
     tf = TerraformManager(provider)
     tf.apply()
 
+@cluster.command(name='destroy')
+@click.pass_context
+@click.option('--auto-approve', is_flag=True, help='Skip interactive approval')
+def terraform_destroy(ctx, auto_approve):
+    """Destroy Terraform infrastructure"""
+    provider = ctx.obj['provider']
+    tf = TerraformManager(provider)
+    
+    if auto_approve or click.confirm(f'Are you sure you want to destroy the {provider} infrastructure?'):
+        tf.destroy()
+
 if __name__ == '__main__':
     cli(obj={}) 
