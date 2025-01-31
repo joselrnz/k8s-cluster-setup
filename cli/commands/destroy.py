@@ -1,19 +1,14 @@
-# cli/commands/destroy.py
-
 import click
-import subprocess
-import os
+from cli.utils.terraform import TerraformManager
 
-@click.command()
-@click.option('--provider', type=click.Choice(['aws', 'azure', 'gcp']), required=True, help='Cloud provider to destroy infrastructure from.')
-def destroy(provider):
-    """Destroy infrastructure on the specified cloud provider."""
-    click.echo(f"Destroying infrastructure on {provider}...")
-
-    # Change directory to the provider's Terraform configuration
-    os.chdir(f"terraform/{provider}")
-
-    # Destroy the infrastructure
-    subprocess.run(["terraform", "destroy", "-auto-approve"], check=True)
-
-    click.echo(f"Infrastructure on {provider} destroyed.")
+def destroy_cluster(provider):
+    """
+    Destroy the Kubernetes cluster
+    """
+    try:
+        tf = TerraformManager(provider)
+        tf.destroy()
+        click.echo(click.style("✓ Cluster destroyed successfully!", fg="green"))
+    except Exception as e:
+        click.echo(click.style(f"Error: {str(e)}", fg="red"))
+        raise click.Abort() 

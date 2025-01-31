@@ -1,25 +1,26 @@
-# cli/commands/deploy.py
-
 import click
-import subprocess
-import os
+from cli.utils.terraform import TerraformManager
+from cli.utils.ansible import AnsibleManager
 
-@click.command()
-@click.option('--provider', type=click.Choice(['aws', 'azure', 'gcp']), required=True, help='Cloud provider to deploy to.')
-def deploy(provider):
-    """Deploy infrastructure to the specified cloud provider."""
-    click.echo(f"Deploying to {provider}...")
+def deploy_cluster(provider, skip_terraform=False, skip_ansible=False):
+    """
+    Deploy the Kubernetes cluster
+    """
+    try:
+        if not skip_terraform:
+            tf = TerraformManager(provider)
+            tf.init()
+            tf.plan()
+            tf.apply()
+            click.echo(click.style("✓ Terraform deployment completed", fg="green"))
 
-    # Change directory to the provider's Terraform configuration
-    os.chdir(f"terraform/{provider}")
+        if not skip_ansible:
+            ansible = AnsibleManager(provider)
+            ansible.run_playbook()
+            click.echo(click.style("✓ Ansible configuration completed", fg="green"))
 
-    # Initialize Terraform
-    subprocess.run(["terraform", "init"], check=True)
+        click.echo(click.style("✓ Cluster deployment completed successfully!", fg="green"))
 
-    # Plan the deployment
-    subprocess.run(["terraform", "plan"], check=True)
-
-    # Apply the deployment
-    subprocess.run(["terraform", "apply", "-auto-approve"], check=True)
-
-    click.echo(f"Deployment to {provider} completed.")
+    except Exception as e:
+        click.echo(click.style(f"Error: {str(e)}", fg="red"))
+        raise click.Abort() 

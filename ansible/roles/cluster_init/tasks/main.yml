@@ -25,25 +25,25 @@
 
 - name: Clone the repository
   ansible.builtin.git:
-    repo: "https://github.com/joselrnz/test.git"
-    dest: /tmp/test
+    repo: "https://github.com/joselrnz/kubernetes-bootstrap.git"
+    dest: /tmp/kubernetes-bootstrap
     version: main
     force: yes
 
-- name: Ensure clust.sh is executable
+- name: Ensure kubernetes-node-setup.sh is executable
   ansible.builtin.file:
-    path: /tmp/test/clust.sh
+    path: /tmp/kubernetes-bootstrap/kubernetes-node-setup.sh
     mode: '0755'
 
-- name: List files in /tmp/test
-  shell: ls -l /tmp/test
+- name: List files in /tmp/kubernetes-bootstrap
+  shell: ls -l /tmp/kubernetes-bootstrap
   register: ls_output
 
 - name: Display the output of ls
   debug:
     msg: "{{ ls_output.stdout }}"
 
-- name: Run clust.sh with arguments
+- name: Run kubernetes-node-setup.sh with arguments
   command: >
     echo "{{ node_name }}" "{{ control_plane }}"
   register: echo_output
@@ -52,14 +52,14 @@
   debug:
     var: echo_output.stdout
 
-- name: Run clust.sh with hostname and control-plane arguments
+- name: Run kubernetes-node-setup.sh with hostname and control-plane arguments
   shell: >
-    sudo /tmp/test/clust.sh --hostname "{{ node_name }}" --control-plane "{{ control_plane }}"
+    sudo /tmp/kubernetes-bootstrap/kubernetes-node-setup.sh --hostname "{{ node_name }}" --control-plane "{{ control_plane }}"
   args:
     executable: /bin/bash
   register: clust_output
 
-- name: Display the output of clust.sh
+- name: Display the output of kubernetes-node-setup.sh
   debug:
     msg: "{{ clust_output.stdout }}"
 

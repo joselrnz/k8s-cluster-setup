@@ -2,8 +2,8 @@
 
 # Function to display usage of the script
 usage() {
-  echo "Usage: $0 <k8s_filter> <bastion_filter> <pem_key_location> <dst_location> [env_var]"
-  echo "  env_var is optional and defaults to 'dev' if not specified."
+  echo "Usage: $0 <k8s_filter> <bastion_filter> <pem_key_location> <dst_location> [cloud_provider]"
+  echo "  cloud_provider is optional and defaults to 'aws' if not specified."
   exit 1
 }
 
@@ -56,8 +56,8 @@ if [ ! -f "$pem_key_location" ]; then
   exit 1
 fi
 
-# Optional environment variable (defaults to 'dev' if not provided)
-env_var="${5:-dev}"  # If env_var is not provided, default to 'dev'
+# Optional cloud provider (defaults to 'aws' if not provided)
+cloud_provider="${5:-aws}"  # If cloud_provider is not provided, default to 'aws'
 
 # Set the home directory based on the SSH user (defaulting to ubuntu)
 home_dir="/home/$(get_ssh_user "Ubuntu")/"
@@ -130,7 +130,6 @@ else
     echo "Unknown OS or not Linux. Cannot install Ansible."
 fi
 echo   "$pem_key_location" -o StrictHostKeyChecking=no "ubuntu@ec2-$ec2_ip_bastion.compute-1.amazonaws.com"
-# exit 23
 echo "Detected OS type: $os_check"
 echo "SSH user: $ssh_user"
 
@@ -142,23 +141,22 @@ scp -i "$pem_key_location" "$pem_key_location" "$ssh_user@ec2-$ec2_ip_bastion.co
 pem_key_name=$(basename "$pem_key_location")
 pem_key_path="${home_dir}${pem_key_name}"
 
-
-hosts_file="./ansible/inventories/${env_var}/hosts"
+# Create the hosts file with cloud provider path
+hosts_file="./ansible/inventories/${cloud_provider}/hosts"
 echo "[master]" > "$hosts_file"
 for name in "${!k8s_vars[@]}"; do
   if [[ "$name" == *master* ]]; then
-    node_name="${name}" # Assign node_name to the variable
-    control_plane="yes" # Set control_plane to yes for master
+    node_name="${name}"
+    control_plane="yes"
     echo "${k8s_vars[$name]} ansible_user=$ssh_user ansible_ssh_private_key_file=$pem_key_path ansible_ssh_common_args='-o StrictHostKeyChecking=no' node_name=$node_name control_plane=$control_plane" >> "$hosts_file"
   fi
 done
 
-# Write the [worker] section to the Ansible hosts file
 echo "[worker]" >> "$hosts_file"
 for name in "${!k8s_vars[@]}"; do
   if [[ "$name" == *worker* ]]; then
-    node_name="${name}" # Assign node_name to the variable
-    control_plane="no" # Set control_plane to no for worker
+    node_name="${name}"
+    control_plane="no"
     echo "${k8s_vars[$name]} ansible_user=$ssh_user ansible_ssh_private_key_file=$pem_key_path ansible_ssh_common_args='-o StrictHostKeyChecking=no' node_name=$node_name control_plane=$control_plane" >> "$hosts_file"
   fi
 done
@@ -169,30 +167,25 @@ for name in "${!k8s_vars[@]}"; do
   echo "$dynamic_var_name=${k8s_vars[$name]}"
 done
 
-
 echo "Ansible hosts file has been generated at $hosts_file"
 
 # Transfer Ansible playbook to Bastion
 scp -i "$pem_key_location" -r "ansible" "$ssh_user@ec2-$ec2_ip_bastion.compute-1.amazonaws.com:$dst_location"
 
-
-#Remove after testing
-scp -i "$pem_key_location"  "./clust.sh" "$ssh_user@ec2-$ec2_ip_bastion.compute-1.amazonaws.com:$dst_location"
-
 # Run the Ansible playbook
 echo "Running Ansible playbook on Bastion..."
 ssh -i "$pem_key_location" -o StrictHostKeyChecking=no "$ssh_user@ec2-$ec2_ip_bastion.compute-1.amazonaws.com" <<EOF
   cd ansible/
-  ansible-playbook -i inventories/$env_var/hosts my_playbook.yml
+  ansible-playbook -i inventories/$cloud_provider/hosts site.yml
   cd ~/
   sudo mkdir -p /home/$ssh_user/.kube
   sudo cp /tmp/admin.conf /home/$ssh_user/.kube/config
 
-  # Step 2: Set proper ownership and permissions
+  # Set proper ownership and permissions
   sudo chown -R $ssh_user:$ssh_user /home/$ssh_user/.kube
   sudo chmod 600 /home/$ssh_user/.kube/config
 
-  # Step 3: Set the KUBECONFIG environment variable (persistent)
+  # Set the KUBECONFIG environment variable (persistent)
   echo "export KUBECONFIG=/home/$ssh_user/.kube/config" >> /home/$ssh_user/.bashrc
   source /home/$ssh_user/.bashrc
 
@@ -205,5 +198,5 @@ echo "Ansible playbook execution completed."
 ssh -i "$pem_key_location" -o StrictHostKeyChecking=no "$ssh_user@ec2-$ec2_ip_bastion.compute-1.amazonaws.com"
 
 # Command to run 
-##./run_bash.sh "*k8s*" "*bastion*" "<Key pair location>.pem" "/home/ubuntu/" 
-#./run_bash.sh "*k8s*" "*bastion*" "/home/joselrnz/aws/key_pairs/kube.pem" "/home/ubuntu/" 
+##./run_bash.sh "*k8s*" "*bastion*" "<Key pair location>.pem" "/home/ubuntu/" "aws"
+#./run_bash.sh "*k8s*" "*bastion*" "/home/joselrnz/aws/key_pairs/kube.pem" "/home/ubuntu/" "aws"
