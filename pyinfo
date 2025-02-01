@@ -1,0 +1,19 @@
+# Show Terraform plan
+./main.py cluster --provider aws plan
+./main.py cluster --provider azure plan
+./main.py cluster --provider gcp plan
+
+# Apply Terraform configuration (with auto-approve)
+./main.py cluster --provider aws apply
+./main.py cluster --provider azure apply
+./main.py cluster --provider gcp apply
+
+# Destroy infrastructure (with confirmation)
+./main.py cluster --provider aws destroy
+./main.py cluster --provider azure destroy
+./main.py cluster --provider gcp destroy
+
+# Destroy infrastructure (without confirmation)
+./main.py cluster --provider aws destroy --auto-approve
+./main.py cluster --provider azure destroy --auto-approve
+./main.py cluster --provider gcp destroy --auto-approve
