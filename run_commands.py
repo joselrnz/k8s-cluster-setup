@@ -2,6 +2,14 @@ import argparse
 import subprocess
 import json
 import os
+import logging
+import os
+import sys
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 class ConfigLoader:
     """Class to load configuration from a JSON file."""
